@@ -1,6 +1,8 @@
 package com.oauth_example.oauth_example.config;
 
 
+import com.oauth_example.oauth_example.service.CustomOauthService;
+import com.oauth_example.oauth_example.service.CustomOauthSuccessService;
 import com.oauth_example.oauth_example.util.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +22,12 @@ public class SecurityConfig {
     @Autowired
     private JwtFilter jwtFilter;
 
+    @Autowired
+    private CustomOauthSuccessService successHandler;
+
+    @Autowired
+    private CustomOauthService customOAuth2UserService;
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -31,7 +39,10 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(withDefaults())
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .successHandler(successHandler) // <--- ini bagian penting
+                )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
 
